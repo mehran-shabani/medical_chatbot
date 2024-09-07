@@ -1,0 +1,34 @@
+<!-- templates/chat.html -->
+
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>چت‌بات پزشکی</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h2>چت با پزشک</h2>
+        
+        <!-- اضافه کردن فرم برای ارسال پیام -->
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="message">پیام شما</label>
+                <textarea id="message" name="message" class="form-control" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">ارسال پیام</button>
+        </form>
+
+        <br>
+
+        <!-- نمایش پاسخ چت‌بات -->
+        {% if bot_response %}
+            <h2>پاسخ پزشک:</h2>
+            <p>{{ bot_response }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

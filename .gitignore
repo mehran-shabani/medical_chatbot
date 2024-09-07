@@ -1,2 +1,5 @@
 *.pyc
 /chatbot/migrations
+*.env
+/.venv
+*.sqlite3
