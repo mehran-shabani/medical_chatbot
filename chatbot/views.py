@@ -1,4 +1,3 @@
-# chatbot/views.py
 from django.shortcuts import render
 from .forms import ChatForm
 from .models import ChatMessage, User
@@ -26,22 +25,17 @@ def chatbot_view(request):
         # ذخیره پیام کاربر
         ChatMessage.objects.create(user=user, message=user_message, is_bot=False)
 
-        # تولید پاسخ از GPT با استفاده از مدل gpt-4o-mini و روش جدید
-        response = client.chat.completions.with_raw_response.create(
-            messages=[{
-                "role": "user",
-                "content": user_message,
-            }],
-            model="gpt-4o-mini",
+        # تولید پاسخ از GPT
+        response = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "You are an experienced medical doctor."},
+                {"role": "user", "content": user_message},
+            ],
+            model="gpt-4",
         )
 
-        # دریافت هدرهای پاسخ
-        request_id = response.headers.get('x-request-id')
-        print(f"Request ID: {request_id}")
-
-        # پارس کردن پاسخ
-        completion = response.parse()
-        bot_message = [completion.choices[0].message.content]
+        # دریافت پاسخ
+        bot_message = response.choices[0].message.content
 
         # ذخیره پیام بات
         ChatMessage.objects.create(user=user, message=bot_message, is_bot=True)
