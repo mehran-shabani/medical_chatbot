@@ -17,5 +17,18 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"{'Bot' if self.is_bot else 'User'}: {self.message[:50]}"
+class ChatSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Disease(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    symptoms = models.ManyToManyField('Symptom', related_name='diseases')
+
+class Symptom(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
 
 
