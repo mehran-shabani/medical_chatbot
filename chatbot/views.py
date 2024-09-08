@@ -59,9 +59,13 @@ def chatbot_view(request):
         else:
             # تولید پاسخ از GPT
             past_messages = generate_chat_context(session)
+            past_messages.insert(0, {"role": "system", "content": "شما یک پزشک بسیار دانا و با تجربه هستید. وظیفه شما تشخیص بیماری‌ها و پیشنهاد درمان‌های مناسب است. علائم بیمار را با دقت بررسی کنید و پیشنهادهای درمانی بدهید."})
+
             response = client.chat.completions.create(
                 messages=past_messages + [{"role": "user", "content": user_message}],
-                model="gpt-4",
+                model="gpt-4o-mini",
+                temperature= 0.7,
+                max_tokens=200,
             )
             bot_message = response.choices[0].message.content
 

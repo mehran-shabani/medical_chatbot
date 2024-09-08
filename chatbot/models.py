@@ -9,18 +9,20 @@ class User(models.Model):
     def __str__(self):
         return self.name
 
+
+class ChatSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 class ChatMessage(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE)
     message = models.TextField()
     is_bot = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{'Bot' if self.is_bot else 'User'}: {self.message[:50]}"
-class ChatSession(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-
 
 class Disease(models.Model):
     name = models.CharField(max_length=255)
