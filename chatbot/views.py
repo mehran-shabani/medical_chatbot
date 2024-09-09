@@ -2,7 +2,7 @@ from django.shortcuts import render
 from .models import ChatMessage, User, Symptom, Disease, ChatSession
 from openai import OpenAI
 from medical_chatbot import settings
-
+from .cleaner import clean_bot_message
 apikey = settings.OPENAI_API_KEY
 client = OpenAI(api_key=apikey)
 
@@ -68,6 +68,9 @@ def chatbot_view(request):
                 max_tokens=200,
             )
             bot_message = response.choices[0].message.content
+        
+        # clean bot message
+        bot_message = clean_bot_message(bot_message)
 
         # ذخیره پیام بات
         ChatMessage.objects.create(session=session, user=user, message=bot_message, is_bot=True)
