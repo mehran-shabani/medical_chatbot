@@ -55,7 +55,7 @@ def remove_repeated_phrases(text):
     
     return '. '.join(cleaned_sentences)
 
-def generate_gpt_response(session, user_message, max_history_length=5):
+def generate_gpt_response(session, user_message, max_history_length=1):
     # تولید پیام‌های گذشته (تاریخچه مکالمه)
     past_messages = generate_chat_context(session)
     
@@ -63,7 +63,7 @@ def generate_gpt_response(session, user_message, max_history_length=5):
     if len(past_messages) > max_history_length:
         past_messages = past_messages[-max_history_length:]  # فقط 5 پیام آخر
 
-   
+
 
     # اضافه کردن پیام سیستمی برای تعیین نقش ربات
     past_messages.insert(0, {"role": "system", "content": "شما یک پزشک بسیار دانا و با تجربه هستید. وظیفه شما تشخیص بیماری‌ها و پیشنهاد درمان‌های مناسب است. علائم بیمار را با دقت بررسی کنید و پیشنهادهای درمانی بدهید."})
@@ -73,7 +73,7 @@ def generate_gpt_response(session, user_message, max_history_length=5):
         messages=past_messages + [{"role": "user", "content": user_message}],
         model="gpt-4o-mini",
         temperature=0.7,
-        max_tokens=100,
+        max_tokens=150,
     )
 
     # دریافت پاسخ اولیه
