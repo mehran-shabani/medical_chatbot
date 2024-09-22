@@ -64,7 +64,7 @@ def generate_gpt_response(session, user_message, max_history_length=1):
     # ارسال درخواست به API
     url = 'https://api.talkbot.ir/v1/chat/completions'
     payload = json.dumps({
-        "model": "gpt-3.5-turbo",
+        "model": "gpt-4o-mini",
         "messages": past_messages + [{"role": "user", "content": user_message}],
         "max_token": 4000,
         "temperature": 0.3,

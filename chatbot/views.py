@@ -1,36 +1,43 @@
-# chabot/views.py
-from django.shortcuts import render
+from rest_framework.response import Response
+from rest_framework import status
 from .models import ChatMessage, ChatSession
-
 from .cleaner import clean_bot_message
-
-
-
-
-from django.shortcuts import render
 from .generateresponse import (
     get_or_create_default_user, 
     get_medical_info, 
     generate_gpt_response, 
-    
 )
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 from .models import ChatMessage, ChatSession
+from .cleaner import clean_bot_message
+from .generateresponse import (
+    get_or_create_default_user, 
+    get_medical_info, 
+    generate_gpt_response, 
+)
+from .serializers import ChatMessageSerializer  # اطمینان حاصل کنید که این خط درست است
 
-def chatbot_view(request):
-    # دریافت یا ایجاد کاربر پیش‌فرض
-    user = get_or_create_default_user()
+class ChatbotAPIView(APIView):
+    def post(self, request):
+        serializer = ChatMessageSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # مدیریت جلسات چت
-    session_id = request.session.get('chat_session_id')
-    if not session_id:
-        session = ChatSession.objects.create(user=user)
-        request.session['chat_session_id'] = session.id
-    else:
-        session = ChatSession.objects.get(id=session_id)
+        # دریافت یا ایجاد کاربر پیش‌فرض
+        user = get_or_create_default_user()
 
-    bot_response = None
-    if request.method == 'POST':
-        user_message = request.POST.get('message')
+        # مدیریت جلسات چت
+        session_id = request.session.get('chat_session_id')
+        if not session_id:
+            session = ChatSession.objects.create(user=user)
+            request.session['chat_session_id'] = session.id
+        else:
+            session = ChatSession.objects.get(id=session_id)
+
+        user_message = serializer.validated_data['message']
 
         # ذخیره پیام کاربر
         ChatMessage.objects.create(session=session, user=user, message=user_message, is_bot=False)
@@ -49,7 +56,5 @@ def chatbot_view(request):
         # ذخیره پیام بات
         ChatMessage.objects.create(session=session, user=user, message=bot_message, is_bot=True)
 
-        # ارسال پاسخ به قالب HTML
-        bot_response = clean_bot_message(bot_message)
+        return Response({"bot_response": bot_message}, status=status.HTTP_200_OK)
 
-    return render(request, 'chat.html', {'bot_response': bot_response})
