@@ -1,13 +1,11 @@
 # chabot/views.py
 from django.shortcuts import render
 from .models import ChatMessage, ChatSession
-from openai import OpenAI
-from medical_chatbot import settings
+
 from .cleaner import clean_bot_message
 
 
-apikey = settings.OPENAI_API_KEY
-client = OpenAI(api_key=apikey)
+
 
 from django.shortcuts import render
 from .generateresponse import (

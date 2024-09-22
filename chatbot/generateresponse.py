@@ -1,10 +1,10 @@
+import json
+import requests
 from .models import ChatMessage, Symptom, Disease, ChatSession, User
-from openai import OpenAI
 from medical_chatbot import settings
 
 # دریافت کلید API از تنظیمات
-apikey = settings.OPENAI_API_KEY
-client = OpenAI(api_key=apikey)
+apikey = settings.TALKBOT_API
 
 def get_or_create_default_user():
     # ایجاد یا گرفتن کاربر پیش‌فرض
@@ -33,17 +33,12 @@ def get_medical_info(user_message):
     return None
 
 def is_message_complete(message):
-    """
-    بررسی می‌کند که آیا پیام به نقطه پایانی منطقی رسیده است یا خیر.
-    می‌توانیم به دنبال نقطه (.) یا علامت سوال و ... بگردیم.
-    """
+    # بررسی می‌کند که آیا پیام به نقطه پایانی منطقی رسیده است یا خیر.
     end_symbols = ['.', '!', '؟', '؟']  # علائم پایانی منطقی
     return any(message.strip().endswith(symbol) for symbol in end_symbols)
 
 def remove_repeated_phrases(text):
-    """
-    این تابع جملات تکراری را از پاسخ حذف می‌کند.
-    """
+    # این تابع جملات تکراری را از پاسخ حذف می‌کند.
     sentences = text.split('. ')
     seen = set()
     cleaned_sentences = []
@@ -63,34 +58,48 @@ def generate_gpt_response(session, user_message, max_history_length=1):
     if len(past_messages) > max_history_length:
         past_messages = past_messages[-max_history_length:]  # فقط 5 پیام آخر
 
-
-
     # اضافه کردن پیام سیستمی برای تعیین نقش ربات
     past_messages.insert(0, {"role": "system", "content": "شما یک پزشک بسیار دانا و با تجربه هستید. وظیفه شما تشخیص بیماری‌ها و پیشنهاد درمان‌های مناسب است. علائم بیمار را با دقت بررسی کنید و پیشنهادهای درمانی بدهید."})
 
-    # ارسال درخواست به GPT
-    response = client.chat.completions.create(
-        messages=past_messages + [{"role": "user", "content": user_message}],
-        model="gpt-4o-mini",
-        temperature=0.7,
-        max_tokens=150,
-    )
+    # ارسال درخواست به API
+    url = 'https://api.talkbot.ir/v1/chat/completions'
+    payload = json.dumps({
+        "model": "gpt-3.5-turbo",
+        "messages": past_messages + [{"role": "user", "content": user_message}],
+        "max_token": 4000,
+        "temperature": 0.3,
+        "stream": False,
+        "top_p": 1.0,
+        "frequency_penalty": 0.0,
+        "presence_penalty": 0.0
+    })
 
-    # دریافت پاسخ اولیه
-    bot_message = response.choices[0].message.content
-    
-    # حذف جملات تکراری
-    bot_message = remove_repeated_phrases(bot_message)
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {apikey}'  # استفاده از کلید API
+    }
 
-    # بررسی کامل بودن پاسخ
-    while not is_message_complete(bot_message):
-        additional_response = client.chat.completions.create(
-            messages=past_messages + [{"role": "user", "content": user_message}] + [{"role": "assistant", "content": bot_message}],
-            model="gpt-4o-mini",
-            temperature=0.7,
-            max_tokens=50,  # درخواست تکمیل جمله با توکن کمتر
-        )
-        # افزودن ادامه پاسخ به پیام اصلی
-        bot_message += " " + additional_response.choices[0].message.content
+    response = requests.post(url, data=payload, headers=headers)
 
-    return bot_message
+    if response.ok:
+        # دریافت پاسخ اولیه
+        bot_message = response.json().get('choices', [{}])[0].get('message', {}).get('content', '')
+        
+        # حذف جملات تکراری
+        bot_message = remove_repeated_phrases(bot_message)
+
+        # بررسی کامل بودن پاسخ
+        while not is_message_complete(bot_message):
+            additional_response = requests.post(url, data=json.dumps({
+                "model": "gpt-4o",
+                "messages": past_messages + [{"role": "user", "content": user_message}] + [{"role": "assistant", "content": bot_message}],
+                "max_token": 50,
+                "temperature": 0.7,
+            }), headers=headers)
+            
+            if additional_response.ok:
+                bot_message += " " + additional_response.json().get('choices', [{}])[0].get('message', {}).get('content', '')
+
+        return bot_message
+    else:
+        return f'An error occurred: {response.text}'

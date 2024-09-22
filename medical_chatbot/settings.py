@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'chatbot',
-    'chatbot2',
+    
 ]
 
 MIDDLEWARE = [
@@ -132,4 +132,4 @@ import openai
 import os
 
 # بارگذاری کلید API از فایل .env
-OPENAI_API_KEY = os.getenv('AI_API_KEY')
+TALKBOT_API = os.getenv('AI_API_KEY')
